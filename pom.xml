@@ -77,9 +77,6 @@
                     <imageName>unterstein/neo4j-twitter-stream</imageName>
                     <baseImage>java</baseImage>
                     <entryPoint>["java", "-jar", "/${project.build.finalName}-jar-with-dependencies.jar"]</entryPoint>
-                    <exposes>
-                        <expose>8080</expose>
-                    </exposes>
                     <resources>
                         <resource>
                             <targetPath>/</targetPath>
