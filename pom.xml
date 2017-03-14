@@ -76,7 +76,7 @@
                     <serverId>docker-hub</serverId>
                     <imageName>unterstein/neo4j-twitter-stream</imageName>
                     <baseImage>java</baseImage>
-                    <entryPoint>["java", "-jar", "/${project.build.finalName}-jar-with-dependencies.jar"]</entryPoint>
+                    <entryPoint>["java", "-cp", "/${project.build.finalName}-jar-with-dependencies.jar", "org.neo4j.twitter.stream.TwitterStreamProcessor"]</entryPoint>
                     <resources>
                         <resource>
                             <targetPath>/</targetPath>
