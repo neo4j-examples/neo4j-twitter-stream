@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 
+import static java.lang.System.getenv;
 import static java.util.Arrays.asList;
 
 public class TwitterStreamProcessor {
@@ -26,9 +27,12 @@ public class TwitterStreamProcessor {
         int maxReads = 1000000;
 
         BlockingQueue<String> msgQueue = new LinkedBlockingQueue<String>(10000);
-        BasicClient client = configureStreamClient(msgQueue, System.getenv("TWITTER_KEYS"));
-        TwitterNeo4jWriter writer = new TwitterNeo4jWriter(System.getenv("NEO4J_URL"));
-
+        List<Long> userIds = asList();
+        String searchTerms = getenv("TWITTER_TERMS") != null ? getenv("TWITTER_TERMS") : "happy";
+        List<String> terms = asList(searchTerms.split(","));
+        BasicClient client = configureStreamClient(msgQueue, getenv("TWITTER_KEYS"), userIds, terms);
+        TwitterNeo4jWriter writer = new TwitterNeo4jWriter(getenv("NEO4J_URL"));
+        writer.init();
         int numProcessingThreads = Math.max(1,Runtime.getRuntime().availableProcessors() - 1);
         ExecutorService service = Executors.newFixedThreadPool(numProcessingThreads);
 
@@ -56,11 +60,11 @@ public class TwitterStreamProcessor {
         writer.close();
     }
 
-    private static BasicClient configureStreamClient(BlockingQueue<String> msgQueue, String twitterKeys) {
+    private static BasicClient configureStreamClient(BlockingQueue<String> msgQueue, String twitterKeys, List<Long> userIds, List<String> terms) {
         Hosts hosts = new HttpHosts(Constants.STREAM_HOST);
-        StatusesFilterEndpoint endpoint = new StatusesFilterEndpoint();
-        endpoint.followings(asList(1234L, 566788L));
-        endpoint.trackTerms(asList("twitter", "api"));
+        StatusesFilterEndpoint endpoint = new StatusesFilterEndpoint()
+                .followings(userIds)
+                .trackTerms(terms);
         endpoint.stallWarnings(false);
 
         String[] keys = twitterKeys.split(":");

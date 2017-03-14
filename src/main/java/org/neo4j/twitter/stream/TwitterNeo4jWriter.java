@@ -8,6 +8,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static java.util.stream.Collectors.toList;
 
@@ -23,7 +24,7 @@ class TwitterNeo4jWriter {
             "     t.retweeted_status AS retweet\n" +
             "WHERE t.id is not null " +
             "MERGE (tweet:Tweet {id:t.id})\n" +
-            "SET tweet:Content, tweet.text = t.text,\n" +
+            "SET tweet.text = t.text,\n" +
             "    tweet.created = t.created_at,\n" +
             "    tweet.favorites = t.favorite_count\n" +
             "MERGE (user:User {screen_name:u.screen_name})\n" +
@@ -63,24 +64,39 @@ class TwitterNeo4jWriter {
         driver = GraphDatabase.driver(boltUri, AuthTokens.basic(authInfo[0], authInfo[1]));
     }
 
+    public void init() {
+        try (Session session = driver.session()) {
+            session.run("CREATE CONSTRAINT ON (t:Tweet) ASSERT t.id IS UNIQUE");
+            session.run("CREATE CONSTRAINT ON (u:User) ASSERT u.screen_name IS UNIQUE");
+            session.run("CREATE CONSTRAINT ON (t:Tag) ASSERT t.name IS UNIQUE");
+            session.run("CREATE CONSTRAINT ON (l:Link) ASSERT l.url IS UNIQUE");
+        }
+    }
+
     public void close() {
         driver.close();
     }
 
     public int insert(List<String> tweets, int retries) {
-        while (retries-- > 0) {
+        while (retries > 0) {
             try (Session session = driver.session()) {
                 Gson gson = new Gson();
                 List<Map> statuses = tweets.stream().map((s) -> gson.fromJson(s, Map.class)).collect(toList());
+                long time = System.nanoTime();
+
                 ResultSummary result = session.run(STATEMENT, Values.parameters("tweets", statuses)).consume();
                 int created = result.counters().nodesCreated();
-                System.out.println(created);
+
+                System.out.println(created+" in "+ TimeUnit.NANOSECONDS.toMillis(System.nanoTime()-time)+" ms");
                 System.out.flush();
+
                 return created;
             } catch (Exception e) {
-                System.err.println(e.getClass().getSimpleName() + ":" + e.getMessage());
+                System.err.println(e.getClass().getSimpleName() + ":" + e.getMessage()+" retries left "+retries);
+                retries--;
             }
         }
         return -1;
     }
+
 }
