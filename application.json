@@ -1,0 +1,18 @@
+{
+  "id": "/neo4j-twitter-stream",
+  "env": {
+    "NEO4J_URL": "bolt+routing://neo4j:dcos@core-neo4j.marathon.containerip.dcos.thisdcos.directory:7687",
+    "TWITTER_KEYS": "consumerKey:consumerSecret:authToken:authSecret",
+    "TWITTER_TERMS": "happy,sad"
+  },
+  "instances": 1,
+  "cpus": 1,
+  "mem": 2000,
+  "disk": 500,
+  "container": {
+    "docker": {
+      "image": "unterstein/neo4j-twitter-stream",
+      "forcePullImage": true
+    }
+  }
+}

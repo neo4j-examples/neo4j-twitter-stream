@@ -76,7 +76,7 @@
                     <serverId>docker-hub</serverId>
                     <imageName>unterstein/neo4j-twitter-stream</imageName>
                     <baseImage>java</baseImage>
-                    <entryPoint>["java", "-jar", "/${project.build.finalName}-jar-with-dependencies.jar"]</entryPoint>
+                    <entryPoint>["java", "-cp", "/${project.build.finalName}-jar-with-dependencies.jar", "org.neo4j.twitter.stream.TwitterStreamProcessor"]</entryPoint>
                     <resources>
                         <resource>
                             <targetPath>/</targetPath>
@@ -84,6 +84,15 @@
                             <include>${project.build.finalName}-jar-with-dependencies.jar</include>
                         </resource>
                     </resources>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>dcos</groupId>
+                <artifactId>dcos-maven-plugin</artifactId>
+                <version>0.3</version>
+                <configuration>
+                    <dcosUrl>https://dcos.your.company.com/</dcosUrl>
+                    <ignoreSslCertificate>true</ignoreSslCertificate>
                 </configuration>
             </plugin>
         </plugins>
